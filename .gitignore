@@ -1,0 +1,17 @@
+# Python
+__pycache__
+
+# OS X
+.history
+.DS_Store
+
+# vim
+*.swp
+
+# npm
+node_modules/
+
+# cdk
+cdk.out/
+
+.install

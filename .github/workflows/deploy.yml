@@ -1,0 +1,151 @@
+name: Deploy API
+
+on:
+  push:
+    branches:
+      - master
+
+concurrency: deployment
+
+permissions:
+  pull-requests: write # so we can comment on PR
+  id-token: write # This is required for aws creds requesting the JWT
+  contents: read  # This is required for aws creds actions/checkout
+
+env:
+  AWS_ACCOUNT: '276304361801'
+  AWS_REGION: 'us-west-2'
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: install poetry
+      run: |
+        python -m pip install poetry
+
+    - name: make install
+      run: |
+        make install
+        poetry run npx cdk --version
+
+    - name: configure aws credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/github-${{ github.repository_owner }}-${{ github.event.repository.name }}-role
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: cdk deploy
+      run: |
+        poetry run npx cdk --require-approval never deploy \
+          --outputs-file=outputs.json \
+          --context jwks_url="https://assets.auth.magic.link/split-key/.well-known/jwks_dev.json" \
+          --context env_name=dev \
+          --context domain_name=dkms-customer-api.dev.magic.link \
+          --context acm_cert_arn="arn:aws:acm:us-west-2:276304361801:certificate/30c64e13-f9f5-4c66-b7f5-65b6a84f50d3" \
+          --context cors_allow_origins='*'
+
+    - name: health check
+      run: |
+        API_URL=$(jq -r '.[].dkmscustomerapiurl' outputs.json)
+        curl -s --fail-with-body ${API_URL}healthz
+
+  deploy-stagef:
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+    environment: stagef
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: install poetry
+      run: |
+        python -m pip install poetry
+
+    - name: make install
+      run: |
+        make install
+        poetry run npx cdk --version
+
+    - name: configure aws credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/github-${{ github.repository_owner }}-${{ github.event.repository.name }}-role
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: cdk deploy
+      run: |
+        poetry run npx cdk --require-approval never deploy \
+          --outputs-file=outputs.json \
+          --context jwks_url="https://assets.auth.magic.link/split-key/.well-known/jwks_stagef.json" \
+          --context env_name=stagef \
+          --context domain_name=dkms-customer-api.stagef.magic.link \
+          --context acm_cert_arn="arn:aws:acm:us-west-2:276304361801:certificate/6ce412b4-6b84-4f8d-a775-71c8af130b56" \
+          --context cors_allow_origins='*'
+
+    - name: health check
+      run: |
+        API_URL=$(jq -r '.[].dkmscustomerapiurl' outputs.json)
+        curl -s --fail-with-body ${API_URL}healthz
+
+  deploy-prod:
+    runs-on: ubuntu-latest
+    needs: deploy-stagef
+    environment: prod
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: install poetry
+      run: |
+        python -m pip install poetry
+
+    - name: make install
+      run: |
+        make install
+        poetry run npx cdk --version
+
+    - name: configure aws credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT }}:role/github-${{ github.repository_owner }}-${{ github.event.repository.name }}-role
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: cdk deploy
+      run: |
+        poetry run npx cdk --require-approval never deploy \
+          --outputs-file=outputs.json \
+          --context domain_name=dkms-customer-api.magic.link \
+          --context acm_cert_arn="arn:aws:acm:us-west-2:276304361801:certificate/f278cd4d-e846-4063-bb00-bd15c382bb41"
+
+    - name: health check
+      run: |
+        API_URL=$(jq -r '.[].dkmscustomerapiurl' outputs.json)
+        curl -s --fail-with-body ${API_URL}healthz

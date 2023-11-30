@@ -1,0 +1,40 @@
+name: Test Pull Request
+
+on:
+  pull_request:
+    branches:
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: install poetry
+      run: |
+        python -m pip install poetry
+
+    - name: make install
+      run: |
+        make install
+        poetry run npx cdk --version
+
+    - name: make
+      run: |
+        make test-all
+
+    - name: cdk synth
+      run: |
+        make synth

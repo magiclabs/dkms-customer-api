@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "DKMS Customer API"
+version = "0.1.0"
+description = "Magic Labs DKMS customer encryption endpoint"
+authors = ["Magic Labs <team@magic.link>"]
+readme = "README.md"
+license = "Apache-2.0"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+aws-cdk-lib = "^2.92.0"
+constructs = "^10.2.69"
+pytest = "^7.4.2"
+boto3 = "^1.28.82"
+black = "^23.11.0"
+requests = "^2.31.0"
+aws-cdk-aws-apigatewayv2-alpha = "^2.110.0a0"
+aws-cdk-aws-apigatewayv2-integrations-alpha = "^2.110.0a0"
+aws-cdk-aws-lambda-python-alpha = "^2.110.0a0"
+
+[tool.poetry.group.dev.dependencies]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
