@@ -17,7 +17,13 @@ def test_lambda_dkms_healthz():
     response = index.handler(event, context)
     assert response == {
         "statusCode": 200,
-        "headers": {"Content-Type": "application/json"},
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Credentials": True,
+            "Access-Control-Allow-Headers": "Content-Type,Authorization",
+            "Access-Control-Allow-Methods": "OPTIONS,GET,POST",
+            "Access-Control-Allow-Origin": "*",
+        },
         "body": '{"data": {}, "error_code": "", "message": "", "status": "OK"}',
     }
 
@@ -246,3 +252,41 @@ def test_authenticate_jwt(user_jwt):
     }
     payload = index.authenticate(event)
     assert payload == {"sub": "test_user", "ewi": "abcd1234"}
+
+
+def test_options_request_healthz():
+    event = {
+        "rawPath": "/healthz",
+        "requestContext": {"http": {"method": "OPTIONS"}},
+    }
+    context = None
+
+    response = index.handler(event, context)
+    assert response == {
+        "headers": {
+            "Access-Control-Allow-Credentials": True,
+            "Access-Control-Allow-Headers": "Content-Type,Authorization",
+            "Access-Control-Allow-Methods": "OPTIONS,GET,POST",
+            "Access-Control-Allow-Origin": "*",
+        },
+        "statusCode": 200,
+    }
+
+
+def test_options_request_encrypt():
+    event = {
+        "rawPath": "/encrypt",
+        "requestContext": {"http": {"method": "OPTIONS"}},
+    }
+    context = None
+
+    response = index.handler(event, context)
+    assert response == {
+        "headers": {
+            "Access-Control-Allow-Credentials": True,
+            "Access-Control-Allow-Headers": "Content-Type,Authorization",
+            "Access-Control-Allow-Methods": "OPTIONS,GET,POST",
+            "Access-Control-Allow-Origin": "*",
+        },
+        "statusCode": 200,
+    }

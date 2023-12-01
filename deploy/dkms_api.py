@@ -82,6 +82,7 @@ class DKMSCustomerAPIStack(Stack):
             environment={
                 "DKMS_KMS_KEY_ID": self.kms_key.key_id,
                 "JWKS_URL": self.jwks_url,
+                "CORS_ALLOW_ORIGINS": self.cors_allow_origins,
             },
         )
 
@@ -110,31 +111,20 @@ class DKMSCustomerAPIStack(Stack):
             "dkms-customer-api",
             api_name=f"dkms-customer-api-{self.env_name}",
             default_domain_mapping=default_domain_mapping,
-            cors_preflight=apigwv2.CorsPreflightOptions(
-                allow_headers=["Authorization"],
-                allow_methods=[
-                    apigwv2.CorsHttpMethod.GET,
-                    apigwv2.CorsHttpMethod.HEAD,
-                    apigwv2.CorsHttpMethod.OPTIONS,
-                    apigwv2.CorsHttpMethod.POST,
-                ],
-                allow_origins=[self.cors_allow_origins],
-                max_age=Duration.days(10),
-            ),
         )
         dkms_api.add_routes(
             path="/healthz",
-            methods=[apigwv2.HttpMethod.GET],
+            methods=[apigwv2.HttpMethod.GET, apigwv2.HttpMethod.OPTIONS],
             integration=dkms_default_integration,
         )
         dkms_api.add_routes(
             path="/encrypt",
-            methods=[apigwv2.HttpMethod.POST],
+            methods=[apigwv2.HttpMethod.POST, apigwv2.HttpMethod.OPTIONS],
             integration=dkms_default_integration,
         )
         dkms_api.add_routes(
             path="/decrypt",
-            methods=[apigwv2.HttpMethod.POST],
+            methods=[apigwv2.HttpMethod.POST, apigwv2.HttpMethod.OPTIONS],
             integration=dkms_default_integration,
         )
         return dkms_api

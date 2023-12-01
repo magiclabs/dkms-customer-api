@@ -10,6 +10,7 @@ os.environ["AWS_DEFAULT_REGION"] = "us-west-2"
 os.environ[
     "JWKS_URL"
 ] = "https://example.com/.well-known/jwks.json"  # this can be anything because we mock the response in a fixture
+os.environ["CORS_ALLOW_ORIGINS"] = "*"
 
 # openssl genrsa -out private_key.pem 2048
 test_private_key = """-----BEGIN PRIVATE KEY-----

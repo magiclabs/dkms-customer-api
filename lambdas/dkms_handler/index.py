@@ -19,6 +19,18 @@ jwks_url = os.getenv("JWKS_URL", None)
 assert jwks_url is not None, "JWKS_URL environment variable must be set"
 jwks_client = jwt.PyJWKClient(jwks_url)
 
+cors_allow_origins = os.getenv("CORS_ALLOW_ORIGINS", None)
+assert (
+    cors_allow_origins is not None
+), "CORS_ALLOW_ORIGINS environment variable must be set"
+
+cors_headers = {
+    "Access-Control-Allow-Origin": cors_allow_origins,
+    "Access-Control-Allow-Credentials": True,
+    "Access-Control-Allow-Headers": "Content-Type,Authorization",
+    "Access-Control-Allow-Methods": "OPTIONS,GET,POST",
+}
+
 
 class AuthenticationError(Exception):
     """Raised when authentication fails."""
@@ -69,7 +81,9 @@ def router(event) -> dict:
     http_method = event["requestContext"]["http"]["method"]
     path = event["rawPath"]
 
-    if http_method == "GET" and path == "/healthz":
+    if http_method == "OPTIONS":
+        return return_options_handler()
+    elif http_method == "GET" and path == "/healthz":
         return return_handler(status=HTTPStatus.OK)
     elif http_method == "POST" and path == "/encrypt":
         payload = authenticate(event)
@@ -154,6 +168,21 @@ def decrypt(body: str, kms_key_id: str, encryption_context: dict) -> dict:
     return return_handler(status=HTTPStatus.OK, data={"plaintext": decrypted_data})
 
 
+def return_options_handler() -> dict:
+    """Return an OPTIONS request."""
+    status = HTTPStatus.OK
+    logger.info(
+        {
+            "status": status.name,
+            "statusCode": status.value,
+        }
+    )
+    return {
+        "statusCode": status.value,
+        "headers": {**cors_headers},
+    }
+
+
 def return_handler(
     data: dict = {},
     error_code: str = "",
@@ -172,7 +201,7 @@ def return_handler(
     )
     return {
         "statusCode": status.value,
-        "headers": {"Content-Type": "application/json"},
+        "headers": {"Content-Type": "application/json", **cors_headers},
         "body": json.dumps(
             {
                 "data": data,
