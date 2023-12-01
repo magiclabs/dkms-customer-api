@@ -5,7 +5,7 @@ This repository introduces a novel shared security model for application develop
 
 Below is a conceptual diagram illustrating how this model operates. For more in-depth information on the Split-Key DKMS offering, refer to **this link**.
 
-<img width="953" alt="Screenshot 2023-11-28 at 1 49 21 PM" src="https://github.com/magiclabs/dkms-customer-api/assets/78329433/b1251c17-d3d8-410c-9606-62af755b148b">
+<img width="953" alt="286410600-b1251c17-d3d8-410c-9606-62af755b148b" src="https://github.com/magiclabs/dkms-customer-api/assets/78329433/5405065c-aacb-4686-9ba1-dc657651088c">
 
 
 # **Getting Started**
